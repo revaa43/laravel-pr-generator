@@ -38,6 +38,7 @@ Route::middleware('auth')->group(function () {
     });
     
     Route::get('/dashboard', Dashboard::class)->name('dashboard');
+    Route::get('/profile', \App\Livewire\UserProfile::class)->name('profile');
 
     /*
     |--------------------------------------------------------------------------

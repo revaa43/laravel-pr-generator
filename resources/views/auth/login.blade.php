@@ -3,257 +3,222 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - PR Generator</title>
+    <title>Login — Sushi Mentai PR System</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
+
     <style>
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
-        
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out;
-        }
-        
-        .animate-delay-1 {
-            animation-delay: 0.1s;
-            animation-fill-mode: both;
-        }
-        
-        .animate-delay-2 {
-            animation-delay: 0.2s;
-            animation-fill-mode: both;
-        }
+
+        .fade-in { animation: fadeIn 0.4s ease both; }
+        .fade-in-2 { animation: fadeIn 0.4s 0.08s ease both; }
     </style>
 </head>
 <body class="min-h-screen bg-secondary-50 antialiased">
+
     <div class="min-h-screen grid lg:grid-cols-2">
 
-        {{-- LEFT SECTION - Illustration --}}
-        <div class="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-primary-600 via-primary-500 to-primary-600 relative overflow-hidden">
-            
-            {{-- Background Pattern --}}
-            <div class="absolute inset-0 opacity-10">
-                <div class="absolute inset-0" style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 40px 40px;"></div>
-            </div>
+        {{-- ══ LEFT: PHOTO PANEL ══ --}}
+        <div class="hidden lg:block relative overflow-hidden">
 
-            {{-- Logo & Brand --}}
-            <div class="relative z-10 animate-fade-in">
-                <div class="flex items-center gap-3 mb-2">
-                    <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-lg">
-                        <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                    </div>
-                    <h1 class="text-2xl font-bold text-white">PR Generator</h1>
-                </div>
-                <p class="text-primary-100 text-sm">Purchase Requisition Management System</p>
-            </div>
+            {{-- Photo --}}
+            <img
+                src="/sushi-mentai-store.png"
+                alt="Sushi Mentai Store"
+                class="absolute inset-0 w-full h-full object-cover object-center"
+            >
 
-            {{-- Main Content --}}
-            <div class="relative z-10 animate-fade-in animate-delay-1">
-                <h2 class="text-4xl font-bold text-white mb-4 leading-tight">
-                    Simplify Your<br>
-                    Purchase Workflow
+            {{-- Subtle dark overlay so text is readable --}}
+            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10"></div>
+
+            {{-- Bottom content --}}
+            <div class="absolute bottom-0 left-0 right-0 p-10 fade-in-2">
+                <p class="text-xs font-semibold tracking-widest text-white/60 uppercase mb-3">Internal Platform</p>
+                <h2 class="text-3xl font-bold text-white leading-snug mb-3">
+                    Purchase Requisition<br>Management System
                 </h2>
-                <p class="text-primary-50 text-lg max-w-md leading-relaxed">
-                    Manage purchase requisitions efficiently with our modern, streamlined platform designed for digital marketing teams.
+                <p class="text-sm text-white/60 max-w-sm leading-relaxed">
+                    Platform internal untuk pengelolaan purchase requisition operasional Sushi Mentai.
                 </p>
-                
-                {{-- Features --}}
-                <div class="mt-8 space-y-4">
-                    <div class="flex items-start gap-3">
-                        <div class="w-5 h-5 bg-white/20 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-white font-medium text-sm">Digital Approval Workflow</p>
-                            <p class="text-primary-100 text-xs mt-0.5">Streamlined approval process with digital signatures</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start gap-3">
-                        <div class="w-5 h-5 bg-white/20 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-white font-medium text-sm">Real-time Tracking</p>
-                            <p class="text-primary-100 text-xs mt-0.5">Monitor PR status from draft to payment completion</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-start gap-3">
-                        <div class="w-5 h-5 bg-white/20 rounded flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-white font-medium text-sm">Secure & Reliable</p>
-                            <p class="text-primary-100 text-xs mt-0.5">Role-based access control with activity logging</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            {{-- Footer --}}
-            <div class="relative z-10 text-primary-100 text-xs animate-fade-in animate-delay-2">
-                <p>© {{ date('Y') }} PR Generator. All rights reserved.</p>
+                {{-- <div class="mt-6 flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 text-xs text-white/50">
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary-400 inline-block"></span>
+                        Digital Approval
+                    </span>
+                    <span class="text-white/20">·</span>
+                    <span class="inline-flex items-center gap-1.5 text-xs text-white/50">
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary-400 inline-block"></span>
+                        Real-time Tracking
+                    </span>
+                    <span class="text-white/20">·</span>
+                    <span class="inline-flex items-center gap-1.5 text-xs text-white/50">
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary-400 inline-block"></span>
+                        Activity Log
+                    </span>
+                </div> --}}
             </div>
         </div>
 
-        {{-- RIGHT SECTION - Login Form --}}
-        <div class="flex items-center justify-center p-6 lg:p-12">
-            <div class="w-full max-w-md">
+        {{-- ══ RIGHT: FORM PANEL ══ --}}
+        <div class="flex items-center justify-center p-8 bg-white">
+            <div class="w-full max-w-sm fade-in">
 
-                {{-- Mobile Logo --}}
-                <div class="lg:hidden text-center mb-8">
-                    <div class="inline-flex items-center gap-3 mb-4">
-                        <div class="w-12 h-12 bg-primary-600 rounded-lg flex items-center justify-center shadow-lg">
-                            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                        </div>
-                        <h1 class="text-2xl font-bold text-secondary-900">PR Generator</h1>
-                    </div>
-                    <p class="text-secondary-600 text-sm">Purchase Requisition Management</p>
+                {{-- Logo --}}
+                <div class="mb-8">
+                    <img src="/sushi-mentai-logo.png" alt="Sushi Mentai" class="h-10 w-auto mb-6">
+                    <h1 class="text-xl font-bold text-secondary-900 mb-1">Selamat datang</h1>
+                    <p class="text-sm text-secondary-500">Masuk ke akun Anda untuk melanjutkan</p>
                 </div>
 
-                {{-- Login Card --}}
-                <div class="animate-fade-in">
-                    
-                    {{-- Header --}}
-                    <div class="mb-8">
-                        <h2 class="text-2xl font-bold text-secondary-900 mb-2">Welcome back</h2>
-                        <p class="text-secondary-600 text-sm">Enter your credentials to access your account</p>
+                {{-- Error --}}
+                @if ($errors->any())
+                    <div class="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-lg flex gap-2.5 items-start">
+                        <svg class="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            @foreach ($errors->all() as $error)
+                                <p class="text-xs text-red-700">{{ $error }}</p>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                {{-- Form --}}
+                <form method="POST" action="{{ route('login') }}" class="space-y-4">
+                    @csrf
+
+                    {{-- Email --}}
+                    <div>
+                        <label for="email" class="block text-xs font-semibold text-secondary-700 mb-1.5">
+                            Email
+                        </label>
+                        <input
+                            id="email"
+                            type="email"
+                            name="email"
+                            value="{{ old('email') }}"
+                            placeholder="nama@sushimentai.com"
+                            required autofocus
+                            class="w-full px-3.5 py-2.5 text-sm border border-secondary-200 rounded-lg bg-secondary-50 text-secondary-900 placeholder-secondary-400
+                                   focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-400 focus:bg-white transition"
+                        >
                     </div>
 
-                    {{-- Error Messages --}}
-                    @if ($errors->any())
-                        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                            <div class="flex gap-3">
-                                <svg class="w-5 h-5 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                    {{-- Password --}}
+                    <div>
+                        <label for="password" class="block text-xs font-semibold text-secondary-700 mb-1.5">
+                            Password
+                        </label>
+                        <div class="relative">
+                            <input
+                                id="password"
+                                type="password"
+                                name="password"
+                                placeholder="••••••••"
+                                required
+                                class="w-full px-3.5 py-2.5 pr-10 text-sm border border-secondary-200 rounded-lg bg-secondary-50 text-secondary-900 placeholder-secondary-400
+                                       focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-400 focus:bg-white transition"
+                            >
+                            <button type="button" onclick="togglePwd()"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-secondary-400 hover:text-secondary-600 transition">
+                                <svg id="eye-icon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                 </svg>
-                                <div class="flex-1">
-                                    <p class="text-sm font-semibold text-red-800 mb-1">Authentication failed</p>
-                                    <ul class="text-sm text-red-700 space-y-0.5">
-                                        @foreach ($errors->all() as $error)
-                                            <li>{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-
-                    {{-- Login Form --}}
-                    <form method="POST" action="{{ route('login') }}" class="space-y-5">
-                        @csrf
-
-                        {{-- Email --}}
-                        <div>
-                            <label class="block text-sm font-medium text-secondary-700 mb-2">
-                                Email Address
-                            </label>
-                            <input type="email"
-                                   name="email"
-                                   value="{{ old('email') }}"
-                                   class="w-full px-4 py-3 bg-white border border-secondary-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors text-sm"
-                                   placeholder="name@company.com"
-                                   required
-                                   autofocus>
-                        </div>
-
-                        {{-- Password --}}
-                        <div>
-                            <label class="block text-sm font-medium text-secondary-700 mb-2">
-                                Password
-                            </label>
-                            <input type="password"
-                                   name="password"
-                                   class="w-full px-4 py-3 bg-white border border-secondary-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors text-sm"
-                                   placeholder="Enter your password"
-                                   required>
-                        </div>
-
-                        {{-- Remember & Forgot --}}
-                        <div class="flex items-center justify-between">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox"
-                                       id="remember"
-                                       name="remember"
-                                       class="w-4 h-4 text-primary-600 border-secondary-300 rounded focus:ring-2 focus:ring-primary-500">
-                                <span class="text-sm text-secondary-700">Remember me</span>
-                            </label>
-                            
-                            <a href="#" class="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                                Forgot password?
-                            </a>
-                        </div>
-
-                        {{-- Submit Button --}}
-                        <button type="submit" class="w-full px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium text-sm shadow-sm hover:shadow-md">
-                            Sign in to your account
-                        </button>
-                    </form>
-
-                    {{-- Divider --}}
-                    <div class="relative my-8">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-secondary-200"></div>
-                        </div>
-                        <div class="relative flex justify-center text-xs">
-                            <span class="px-3 bg-secondary-50 text-secondary-500 font-medium uppercase tracking-wide">
-                                Demo Accounts
-                            </span>
+                            </button>
                         </div>
                     </div>
 
-                    {{-- Demo Credentials --}}
-                    <div class="space-y-2">
-                        @php
-                            $demoAccounts = [
-                                ['role' => 'Super Admin', 'email' => 'superadmin@company.com', 'color' => 'purple'],
-                                ['role' => 'Manager', 'email' => 'manager@company.com', 'color' => 'blue'],
-                                ['role' => 'Staff', 'email' => 'staff1@company.com', 'color' => 'green'],
-                            ];
-                        @endphp
-
-                        @foreach ($demoAccounts as $account)
-                            <div class="flex items-center justify-between p-3 bg-white border border-secondary-200 rounded-lg hover:border-primary-300 hover:bg-primary-50/30 transition-colors">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-8 h-8 bg-{{ $account['color'] }}-100 text-{{ $account['color'] }}-700 rounded-lg flex items-center justify-center flex-shrink-0">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs font-semibold text-secondary-900">{{ $account['role'] }}</p>
-                                        <p class="text-xs text-secondary-500">{{ $account['email'] }}</p>
-                                    </div>
-                                </div>
-                                <button type="button" 
-                                        onclick="document.querySelector('input[name=email]').value='{{ $account['email'] }}'; document.querySelector('input[name=password]').value='password';"
-                                        class="text-xs font-medium text-primary-600 hover:text-primary-700 px-3 py-1.5 rounded-lg hover:bg-primary-50 transition-colors">
-                                    Use
-                                </button>
-                            </div>
-                        @endforeach
-
-                        <p class="text-center text-xs text-secondary-500 mt-3">
-                            All demo accounts use password: <code class="px-2 py-0.5 bg-primary-50 text-primary-700 rounded font-mono text-xs font-semibold">password</code>
-                        </p>
+                    {{-- Remember & Forgot --}}
+                    <div class="flex items-center justify-between pt-0.5">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="remember"
+                                class="w-3.5 h-3.5 rounded border-secondary-300 text-primary-500 focus:ring-primary-400 cursor-pointer">
+                            <span class="text-xs text-secondary-600">Ingat saya</span>
+                        </label>
+                        <a href="#" class="text-xs font-medium text-primary-600 hover:text-primary-700 transition">
+                            Lupa password?
+                        </a>
                     </div>
 
+                    {{-- Submit --}}
+                    <button type="submit"
+                        class="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg transition shadow-sm hover:shadow-orange">
+                        Masuk
+                    </button>
+                </form>
+
+                <!-- {{-- Divider --}}
+                <div class="flex items-center gap-3 my-6">
+                    <div class="flex-1 h-px bg-secondary-100"></div>
+                    <span class="text-xs text-secondary-400 font-medium tracking-wide uppercase">Demo</span>
+                    <div class="flex-1 h-px bg-secondary-100"></div>
                 </div>
+
+                {{-- Demo Accounts --}}
+                @php
+                    $demoAccounts = [
+                        ['role' => 'Super Admin', 'initial' => 'SA', 'email' => 'superadmin@company.com', 'color' => 'bg-violet-100 text-violet-700'],
+                        ['role' => 'Manager',     'initial' => 'MG', 'email' => 'manager@company.com',    'color' => 'bg-blue-100 text-blue-700'],
+                        ['role' => 'Staff',       'initial' => 'ST', 'email' => 'staff1@company.com',     'color' => 'bg-green-100 text-green-700'],
+                    ];
+                @endphp
+
+                <div class="space-y-2">
+                    @foreach ($demoAccounts as $acc)
+                        <div class="flex items-center justify-between px-3 py-2.5 rounded-lg border border-secondary-100 hover:border-primary-200 hover:bg-primary-50/40 transition cursor-default">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-7 h-7 rounded-lg {{ $acc['color'] }} flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                                    {{ $acc['initial'] }}
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold text-secondary-800">{{ $acc['role'] }}</p>
+                                    <p class="text-[11px] text-secondary-400">{{ $acc['email'] }}</p>
+                                </div>
+                            </div>
+                            <button type="button"
+                                onclick="fillDemo('{{ $acc['email'] }}')"
+                                class="text-[11px] font-semibold text-primary-600 hover:text-primary-700 px-2.5 py-1 rounded-md hover:bg-primary-100 transition">
+                                Gunakan
+                            </button>
+                        </div>
+                    @endforeach
+                </div>
+
+                <p class="text-center text-[11px] text-secondary-400 mt-4">
+                    Password demo: <code class="bg-secondary-100 text-secondary-600 px-1.5 py-0.5 rounded font-mono">password</code>
+                </p> -->
+
+                {{-- Footer --}}
+                <p class="text-center text-[11px] text-secondary-300 mt-8">
+                    © {{ date('Y') }} Sushi Mentai. All rights reserved.
+                </p>
+
             </div>
         </div>
+
     </div>
+
+    <script>
+        function togglePwd() {
+            const input = document.getElementById('password');
+            const icon  = document.getElementById('eye-icon');
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            icon.innerHTML = isHidden
+                ? `<path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>`
+                : `<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>`;
+        }
+
+        function fillDemo(email) {
+            document.getElementById('email').value    = email;
+            document.getElementById('password').value = 'password';
+        }
+    </script>
+
 </body>
 </html>

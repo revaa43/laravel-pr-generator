@@ -1,6 +1,6 @@
 @props(['title' => 'Dashboard'])
 
-<header class="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md">
+<header class="sticky top-0 z-20 h-16 bg-white/95 backdrop-blur-md border-b border-secondary-100">
     <div class="h-full px-6 flex items-center justify-between">
         
         {{-- LEFT SECTION --}}
@@ -59,27 +59,44 @@
                         </p>
                     </div>
                     <div class="relative">
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=171717&color=fff&bold=true" 
-                             class="w-9 h-9 rounded-lg border border-secondary-200">
-                        <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                        {{-- NEW: Use avatar from user model --}}
+                        <img src="{{ Auth::user()->avatar_url }}" 
+                             alt="{{ Auth::user()->name }}"
+                             class="w-9 h-9 rounded-lg border-2 border-secondary-200 object-cover">
+                        
+                        {{-- NEW: Signature indicator badge --}}
+                        @if(Auth::user()->hasSignature())
+                            <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full" title="Signature tersimpan"></span>
+                        @else
+                            <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-secondary-400 border-2 border-white rounded-full" title="Active"></span>
+                        @endif
                     </div>
                 </button>
 
                 {{-- Dropdown Menu --}}
-                <div id="userDropdown" class="dropdown-menu hidden absolute right-0 mt-2 w-56 bg-white border border-secondary-200 rounded-lg shadow-xl overflow-hidden">
+                <div id="userDropdown" class="dropdown-menu hidden absolute right-0 mt-2 w-56 bg-white border border-secondary-200 rounded-xl shadow-xl overflow-hidden">
                     <div class="px-4 py-3 bg-secondary-50 border-b border-secondary-200">
                         <p class="text-sm font-semibold text-secondary-900">{{ Auth::user()->name }}</p>
                         <p class="text-xs text-secondary-500 mt-0.5">{{ Auth::user()->email }}</p>
                     </div>
                     
                     <div class="py-1">
-                        <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary-50 transition-colors group">
+                        {{-- NEW: Profile Link --}}
+                        <a href="{{ route('profile') }}" class="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary-50 transition-colors group">
                             <svg class="w-4 h-4 text-secondary-400 group-hover:text-secondary-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
-                            <span class="text-sm text-secondary-700 group-hover:text-secondary-900">Profile</span>
+                            <div class="flex-1">
+                                <span class="text-sm text-secondary-700 group-hover:text-secondary-900">My Profile</span>
+                                @if(Auth::user()->hasSignature())
+                                    <p class="text-xs text-green-600">✓ Signature ready</p>
+                                @else
+                                    <p class="text-xs text-amber-600">⚠ Set signature</p>
+                                @endif
+                            </div>
                         </a>
 
+                        {{-- Settings (optional) --}}
                         <a href="#" class="flex items-center gap-3 px-4 py-2.5 hover:bg-secondary-50 transition-colors group">
                             <svg class="w-4 h-4 text-secondary-400 group-hover:text-secondary-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />

@@ -111,6 +111,11 @@ class PrForm extends Component
         $this->outlets = Outlet::where('is_active', true)->get();
         $this->tanggal = now()->format('Y-m-d');
 
+        // NEW: Auto-load user signature from profile
+        if (Auth::user()->hasSignature()) {
+            $this->existingStaffSignature = Auth::user()->signature_path;
+        }
+
         if ($id) {
             $this->isEdit = true;
             $this->prId = $id;
@@ -246,181 +251,202 @@ class PrForm extends Component
     public function submitForApproval()
     {
         $this->status = 'submitted';
+
+         // NEW: Auto-use signature from profile if not uploaded
+        if (empty($this->staffSignature) && empty($this->existingStaffSignature)) {
+            if (Auth::user()->hasSignature()) {
+                // No need to upload, akan diambil dari profile
+            } else {
+                $this->addError('staffSignature', 'Silakan upload signature di Profile Anda atau upload di form ini');
+                return;
+            }
+        }
         $this->save();
     }
 
     public function save()
     {
-        try {
-            // Validasi items minimal 1
-            if (count($this->items) < 1) {
-                session()->flash('error', 'Minimal 1 item harus diisi');
+    try {
+        // Validasi items minimal 1
+        if (count($this->items) < 1) {
+            session()->flash('error', 'Minimal 1 item harus diisi');
+            return;
+        }
+
+        // NEW: Validasi khusus untuk submitted status
+        if ($this->status === 'submitted') {
+            // Cek invoice
+            if (empty($this->invoices) && empty($this->existingInvoices)) {
+                $this->addError('invoices', 'Minimal 1 invoice harus di-upload sebelum submit untuk approval');
                 return;
             }
-
-            // NEW: Validasi khusus untuk submitted status
-            if ($this->status === 'submitted') {
-                // Cek invoice
-                if (empty($this->invoices) && empty($this->existingInvoices)) {
-                    $this->addError('invoices', 'Minimal 1 invoice harus di-upload sebelum submit untuk approval');
-                    return;
-                }
-                
-                // NEW: Cek staff signature
-                if (empty($this->staffSignature) && empty($this->existingStaffSignature)) {
-                    $this->addError('staffSignature', 'Tanda tangan staff harus di-upload sebelum submit');
-                    return;
-                }
-                
-                // NEW: Cek recipient info
-                if (empty($this->recipient_name) || empty($this->recipient_bank) || empty($this->recipient_account_number)) {
-                    session()->flash('error', 'Data penerima transfer harus lengkap (Nama, Bank, Nomor Rekening) sebelum submit!');
-                    return;
-                }
+            
+            // NEW: Cek staff signature - bisa dari upload, existing PR, atau user profile
+            $hasSignature = !empty($this->staffSignature) || 
+                            !empty($this->existingStaffSignature) || 
+                            Auth::user()->hasSignature();
+            
+            if (!$hasSignature) {
+                $this->addError('staffSignature', 'Tanda tangan diperlukan. Upload di sini atau set di Profile Anda.');
+                return;
             }
-
-            // Validasi budget outlet (jika submit)
-            if ($this->status === 'submitted' && $this->outlet_id) {
-                $outlet = Outlet::find($this->outlet_id);
-                
-                // Hitung total PR yang sudah approved/paid bulan ini (exclude PR yang sedang diedit)
-                $usedBudget = PurchaseRequisition::where('outlet_id', $this->outlet_id)
-                    ->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year)
-                    ->whereIn('status', ['approved', 'paid'])
-                    ->when($this->isEdit, function($q) {
-                        return $q->where('id', '!=', $this->prId);
-                    })
-                    ->sum('total');
-                
-                $monthlyBudget = 50000000; // Rp 50M per outlet per bulan
-                $remainingBudget = $monthlyBudget - $usedBudget;
-                
-                if ($this->total > $remainingBudget) {
-                    session()->flash('error', 
-                        'Budget outlet tidak cukup! ' .
-                        'Sisa budget bulan ini: Rp ' . number_format($remainingBudget, 0, ',', '.') . ' ' .
-                        'Total PR: Rp ' . number_format($this->total, 0, ',', '.')
-                    );
-                    return;
-                }
+            
+            // NEW: Cek recipient info
+            if (empty($this->recipient_name) || empty($this->recipient_bank) || empty($this->recipient_account_number)) {
+                session()->flash('error', 'Data penerima transfer harus lengkap (Nama, Bank, Nomor Rekening) sebelum submit!');
+                return;
             }
-
-            $this->validate();
-
-            DB::transaction(function () {
-                if ($this->isEdit) {
-                    $pr = PurchaseRequisition::findOrFail($this->prId);
-                    $pr->update([
-                        'tanggal' => $this->tanggal,
-                        'perihal' => $this->perihal,
-                        'alasan' => $this->alasan,
-                        'outlet_id' => $this->outlet_id,
-                        'total' => $this->total,
-                        'status' => $this->status,
-                        // NEW: Recipient info
-                        'recipient_name' => $this->recipient_name,
-                        'recipient_bank' => $this->recipient_bank,
-                        'recipient_account_number' => $this->recipient_account_number,
-                        'recipient_phone' => $this->recipient_phone,
-                    ]);
-                } else {
-                    $pr = PurchaseRequisition::create([
-                        'tanggal' => $this->tanggal,
-                        'perihal' => $this->perihal,
-                        'alasan' => $this->alasan,
-                        'outlet_id' => $this->outlet_id,
-                        'total' => $this->total,
-                        'status' => $this->status,
-                        'created_by' => Auth::id(),
-                        // NEW: Recipient info
-                        'recipient_name' => $this->recipient_name,
-                        'recipient_bank' => $this->recipient_bank,
-                        'recipient_account_number' => $this->recipient_account_number,
-                        'recipient_phone' => $this->recipient_phone,
-                    ]);
-                }
-
-                // Delete existing items if edit
-                if ($this->isEdit) {
-                    $pr->items()->delete();
-                }
-
-                // Save items
-                foreach ($this->items as $index => $item) {
-                    PrItem::create([
-                        'purchase_requisition_id' => $pr->id,
-                        'order' => $index + 1,
-                        'nama_item' => $item['nama_item'],
-                        'jumlah' => $item['jumlah'],
-                        'satuan' => $item['satuan'],
-                        'harga' => $item['harga'],
-                        'subtotal' => $item['subtotal'],
-                    ]);
-                }
-                
-                // NEW: Upload staff signature if provided
-                if ($this->staffSignature) {
-                    // Delete old signature if exists
-                    if ($this->existingStaffSignature && Storage::disk('public')->exists($this->existingStaffSignature)) {
-                        Storage::disk('public')->delete($this->existingStaffSignature);
-                    }
-                    
-                    $signaturePath = $this->staffSignature->store('signatures', 'public');
-                    $pr->update(['staff_signature_path' => $signaturePath]);
-                }
-
-                // Upload new invoices
-                if (!empty($this->invoices)) {
-                    // Validasi total size
-                    $totalSize = collect($this->invoices)->sum(fn($file) => $file->getSize());
-                    if ($totalSize > 26214400) { // 25MB
-                        throw new \Exception('Total ukuran file melebihi 25MB');
-                    }
-
-                    foreach ($this->invoices as $invoice) {
-                        $path = $invoice->store('invoices', 'public');
-                        
-                        PrInvoice::create([
-                            'purchase_requisition_id' => $pr->id,
-                            'file_name' => $invoice->getClientOriginalName(),
-                            'file_path' => $path,
-                            'file_type' => $invoice->getMimeType(),
-                            'file_size' => $invoice->getSize(),
-                            'uploaded_by' => Auth::id(),
-                        ]);
-                    }
-                }
-
-                // Log activity
-                activity()
-                    ->causedBy(Auth::user())
-                    ->performedOn($pr)
-                    ->withProperties([
-                        'pr_number' => $pr->pr_number,
-                        'total' => $pr->total,
-                        'status' => $pr->status,
-                        'has_recipient_info' => !empty($pr->recipient_name),
-                        'has_staff_signature' => !empty($pr->staff_signature_path),
-                    ])
-                    ->log($this->isEdit ? 'PR updated' : 'PR created');
-
-                $this->prId = $pr->id; // Save PR ID for redirect
-            });
-
-            session()->flash('success', $this->status === 'submitted' 
-                ? 'PR berhasil disubmit untuk approval' 
-                : 'PR berhasil disimpan sebagai draft');
-
-            return redirect()->route('pr.show', $this->prId);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            // Validation errors akan otomatis ditampilkan
-            throw $e;
-        } catch (\Exception $e) {
-            Log::error('PR save failed: ' . $e->getMessage());
-            session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+
+        // Validasi budget outlet (jika submit)
+        if ($this->status === 'submitted' && $this->outlet_id) {
+            $outlet = Outlet::find($this->outlet_id);
+            
+            // Hitung total PR yang sudah approved/paid bulan ini (exclude PR yang sedang diedit)
+            $usedBudget = PurchaseRequisition::where('outlet_id', $this->outlet_id)
+                ->whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->whereIn('status', ['approved', 'paid'])
+                ->when($this->isEdit, function($q) {
+                    return $q->where('id', '!=', $this->prId);
+                })
+                ->sum('total');
+            
+            $monthlyBudget = 50000000; // Rp 50M per outlet per bulan
+            $remainingBudget = $monthlyBudget - $usedBudget;
+            
+            if ($this->total > $remainingBudget) {
+                session()->flash('error', 
+                    'Budget outlet tidak cukup! ' .
+                    'Sisa budget bulan ini: Rp ' . number_format($remainingBudget, 0, ',', '.') . ' ' .
+                    'Total PR: Rp ' . number_format($this->total, 0, ',', '.')
+                );
+                return;
+            }
+        }
+
+        $this->validate();
+
+        DB::transaction(function () {
+            if ($this->isEdit) {
+                $pr = PurchaseRequisition::findOrFail($this->prId);
+                $pr->update([
+                    'tanggal' => $this->tanggal,
+                    'perihal' => $this->perihal,
+                    'alasan' => $this->alasan,
+                    'outlet_id' => $this->outlet_id,
+                    'total' => $this->total,
+                    'status' => $this->status,
+                    'recipient_name' => $this->recipient_name,
+                    'recipient_bank' => $this->recipient_bank,
+                    'recipient_account_number' => $this->recipient_account_number,
+                    'recipient_phone' => $this->recipient_phone,
+                ]);
+            } else {
+                $pr = PurchaseRequisition::create([
+                    'tanggal' => $this->tanggal,
+                    'perihal' => $this->perihal,
+                    'alasan' => $this->alasan,
+                    'outlet_id' => $this->outlet_id,
+                    'total' => $this->total,
+                    'status' => $this->status,
+                    'created_by' => Auth::id(),
+                    'recipient_name' => $this->recipient_name,
+                    'recipient_bank' => $this->recipient_bank,
+                    'recipient_account_number' => $this->recipient_account_number,
+                    'recipient_phone' => $this->recipient_phone,
+                ]);
+            }
+
+            // Delete existing items if edit
+            if ($this->isEdit) {
+                $pr->items()->delete();
+            }
+
+            // Save items
+            foreach ($this->items as $index => $item) {
+                PrItem::create([
+                    'purchase_requisition_id' => $pr->id,
+                    'order' => $index + 1,
+                    'nama_item' => $item['nama_item'],
+                    'jumlah' => $item['jumlah'],
+                    'satuan' => $item['satuan'],
+                    'harga' => $item['harga'],
+                    'subtotal' => $item['subtotal'],
+                ]);
+            }
+            
+            // NEW: Smart signature handling
+            if ($this->staffSignature) {
+                // User uploaded new signature for this PR
+                // Delete old signature if exists and different from profile
+                if ($this->existingStaffSignature && 
+                    $this->existingStaffSignature !== Auth::user()->signature_path &&
+                    Storage::disk('public')->exists($this->existingStaffSignature)) {
+                    Storage::disk('public')->delete($this->existingStaffSignature);
+                }
+                
+                $signaturePath = $this->staffSignature->store('signatures', 'public');
+                $pr->update(['staff_signature_path' => $signaturePath]);
+                
+            } elseif (empty($this->existingStaffSignature) && Auth::user()->hasSignature()) {
+                // No signature uploaded, use from user profile
+                $pr->update(['staff_signature_path' => Auth::user()->signature_path]);
+            }
+            // else: keep existing signature (do nothing)
+
+            // Upload new invoices
+            if (!empty($this->invoices)) {
+                // Validasi total size
+                $totalSize = collect($this->invoices)->sum(fn($file) => $file->getSize());
+                if ($totalSize > 26214400) { // 25MB
+                    throw new \Exception('Total ukuran file melebihi 25MB');
+                }
+
+                foreach ($this->invoices as $invoice) {
+                    $path = $invoice->store('invoices', 'public');
+                    
+                    PrInvoice::create([
+                        'purchase_requisition_id' => $pr->id,
+                        'file_name' => $invoice->getClientOriginalName(),
+                        'file_path' => $path,
+                        'file_type' => $invoice->getMimeType(),
+                        'file_size' => $invoice->getSize(),
+                        'uploaded_by' => Auth::id(),
+                    ]);
+                }
+            }
+
+            // Log activity
+            activity()
+                ->causedBy(Auth::user())
+                ->performedOn($pr)
+                ->withProperties([
+                    'pr_number' => $pr->pr_number,
+                    'total' => $pr->total,
+                    'status' => $pr->status,
+                    'has_recipient_info' => !empty($pr->recipient_name),
+                    'has_staff_signature' => !empty($pr->staff_signature_path),
+                    'signature_source' => $this->staffSignature ? 'uploaded' : 
+                                            ($pr->staff_signature_path === Auth::user()->signature_path ? 'profile' : 'existing'),
+                ])
+                ->log($this->isEdit ? 'PR updated' : 'PR created');
+
+            $this->prId = $pr->id;
+        });
+
+        session()->flash('success', $this->status === 'submitted' 
+            ? 'PR berhasil disubmit untuk approval' 
+            : 'PR berhasil disimpan sebagai draft');
+
+        return redirect()->route('pr.show', $this->prId);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        throw $e;
+    } catch (\Exception $e) {
+        Log::error('PR save failed: ' . $e->getMessage());
+        session()->flash('error', 'Terjadi kesalahan: ' . $e->getMessage());
+    }
     }
 
     public function render()

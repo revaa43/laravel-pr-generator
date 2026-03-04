@@ -209,69 +209,125 @@
                             @endif
                         </div>
 
-                        <!-- STAFF SIGNATURE SECTION -->
-                        <div>
-                            <h4 class="text-sm font-bold text-secondary-900 mb-3 flex items-center gap-2">
-                                <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                                </svg>
-                                Tanda Tangan Staff
-                            </h4>
-
-                            <!-- Existing Staff Signature (Edit Mode) -->
-                            @if($isEdit && !empty($existingStaffSignature))
-                                <div class="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                        </svg>
-                                        <span class="text-xs font-medium text-green-800">Tanda tangan sudah diupload</span>
-                                    </div>
-                                    <p class="text-xs text-green-600">Upload baru untuk mengganti tanda tangan yang ada</p>
+                        {{-- Staff Signature Section --}}
+                        <div class="bg-white rounded-xl border border-secondary-200 shadow-sm p-6">
+                            <div class="flex items-start justify-between mb-4">
+                                <div>
+                                    <h3 class="text-sm font-semibold text-secondary-900">Tanda Tangan Staff</h3>
+                                    <p class="text-xs text-secondary-500 mt-1">Upload tanda tangan digital Anda</p>
                                 </div>
-                            @endif
-
-                            <!-- Upload Staff Signature -->
-                            <div>
-                                <label class="block text-xs font-medium text-secondary-700 mb-2">
-                                    Upload Tanda Tangan
-                                    @if($status === 'submitted')
-                                        <span class="text-red-500">*</span>
-                                    @endif
-                                </label>
-                                <input 
-                                    type="file" 
-                                    wire:model="staffSignature"
-                                    accept="image/jpeg,image/jpg,image/png"
-                                    class="input text-sm @error('staffSignature') input-error @enderror"
-                                >
-                                @error('staffSignature')
-                                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                                @enderror
-                                
-                                <!-- Upload Progress -->
-                                <div wire:loading wire:target="staffSignature" class="mt-2">
-                                    <div class="flex items-center gap-2 text-primary-600">
-                                        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        <span class="text-xs">Uploading signature...</span>
-                                    </div>
-                                </div>
-
-                                <p class="mt-1 text-xs text-secondary-500">
-                                    Format: JPG, PNG • Max 2MB • Scan/foto tanda tangan Anda
-                                </p>
+                                @if($status === 'draft')
+                                    <span class="text-xs px-2 py-1 bg-secondary-100 text-secondary-600 rounded-full">Optional untuk Draft</span>
+                                @else
+                                    <span class="text-xs px-2 py-1 bg-red-100 text-red-600 rounded-full">Required untuk Submit</span>
+                                @endif
                             </div>
 
-                            <!-- Preview New Staff Signature -->
-                            @if($staffSignature)
-                                <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                    <p class="text-xs font-medium text-blue-800 mb-2">Preview Tanda Tangan:</p>
-                                    <img src="{{ $staffSignature->temporaryUrl() }}" class="h-20 object-contain" alt="Staff Signature Preview">
+                            {{-- Signature Preview --}}
+                            <div class="mb-4">
+                                @if($staffSignature)
+                                    {{-- New uploaded signature --}}
+                                    <div class="relative inline-block">
+                                        <div class="w-64 h-32 rounded-lg border-2 border-primary-200 bg-white p-3 flex items-center justify-center">
+                                            <img src="{{ $staffSignature->temporaryUrl() }}" class="max-w-full max-h-full object-contain">
+                                        </div>
+                                        <button 
+                                            type="button" 
+                                            wire:click="$set('staffSignature', null)"
+                                            class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                        </button>
+                                        <p class="text-xs text-green-600 mt-2 font-medium">✓ Signature baru akan di-upload</p>
+                                    </div>
+                                @elseif($existingStaffSignature)
+                                    {{-- Existing signature --}}
+                                    <div class="space-y-3">
+                                        <div class="w-64 h-32 rounded-lg border-2 border-secondary-200 bg-white p-3 flex items-center justify-center">
+                                            <img src="{{ Storage::url($existingStaffSignature) }}" class="max-w-full max-h-full object-contain">
+                                        </div>
+                                        
+                                        {{-- Check if signature is from user profile --}}
+                                        @if($existingStaffSignature === Auth::user()->signature_path)
+                                            <div class="flex items-start gap-2 text-xs">
+                                                <svg class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                                </svg>
+                                                <div>
+                                                    <p class="text-blue-700 font-medium">Menggunakan signature dari profile Anda</p>
+                                                    <p class="text-blue-600 mt-0.5">Upload signature baru di bawah jika ingin menggunakan yang berbeda</p>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <p class="text-xs text-green-600 font-medium">✓ Signature tersimpan</p>
+                                        @endif
+                                    </div>
+                                @else
+                                    {{-- No signature --}}
+                                    <div class="w-64 h-32 rounded-lg border-2 border-dashed border-secondary-300 bg-secondary-50 flex items-center justify-center">
+                                        <div class="text-center">
+                                            <svg class="w-10 h-10 mx-auto text-secondary-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                            </svg>
+                                            <p class="text-xs text-secondary-500 font-medium">Belum ada signature</p>
+                                            <p class="text-xs text-secondary-400 mt-1">Upload di bawah atau set di <a href="{{ route('profile') }}" class="text-primary-600 hover:underline">Profile</a></p>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- Upload Input --}}
+                            <div class="space-y-3">
+                                <div class="flex items-center gap-3">
+                                    <label class="btn-secondary cursor-pointer text-sm">
+                                        <input type="file" wire:model="staffSignature" accept="image/*" class="hidden">
+                                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                        </svg>
+                                        {{ $existingStaffSignature ? 'Ganti Signature' : 'Upload Signature' }}
+                                    </label>
+
+                                    @if(!Auth::user()->hasSignature())
+                                        <a href="{{ route('profile') }}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                                            atau set di Profile →
+                                        </a>
+                                    @endif
                                 </div>
-                            @endif
+
+                                <p class="text-xs text-secondary-500">
+                                    Format: JPG, PNG. Max 2MB. Scan atau foto tanda tangan Anda di kertas putih.
+                                </p>
+
+                                @error('staffSignature') 
+                                    <p class="text-xs text-red-600 font-medium">{{ $message }}</p> 
+                                @enderror
+
+                                {{-- Upload Progress --}}
+                                <div wire:loading wire:target="staffSignature" class="flex items-center gap-2 text-xs text-primary-600">
+                                    <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Uploading signature...
+                                </div>
+
+                                {{-- Info Alert - No Profile Signature --}}
+                                @if(!Auth::user()->hasSignature() && !$existingStaffSignature)
+                                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                        <div class="flex items-start gap-2">
+                                            <svg class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                            </svg>
+                                            <div class="flex-1">
+                                                <p class="text-xs font-semibold text-amber-800">Tips: Set signature di Profile</p>
+                                                <p class="text-xs text-amber-700 mt-1">Upload signature sekali di <a href="{{ route('profile') }}" class="underline font-medium">Profile</a>, otomatis terisi untuk semua PR baru!</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
 
                         <!-- RECIPIENT INFO SECTION -->

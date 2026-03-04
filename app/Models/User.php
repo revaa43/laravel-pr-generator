@@ -6,18 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles, LogsActivity;
+    use HasFactory, Notifiable, HasRoles, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -25,23 +20,16 @@ class User extends Authenticatable
         'is_active',
         'last_login_at',
         'last_login_ip',
+        'avatar_path',
+        'signature_path',
+        'phone',        
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -52,49 +40,41 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Activity log configuration
-     */
-    public function getActivitylogOptions(): LogOptions
+    // NEW: Avatar URL accessor
+    public function getAvatarUrlAttribute()
     {
-        return LogOptions::defaults()
-            ->logOnly(['name', 'email', 'is_active'])
-            ->logOnlyDirty()
-            ->dontSubmitEmptyLogs();
+        if ($this->avatar_path && Storage::disk('public')->exists($this->avatar_path)) {
+            return Storage::url($this->avatar_path);
+        }
+        
+        // Default avatar with initials
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=f97316&background=fff5f0&bold=true';
     }
 
-    /**
-     * Get purchase requisitions created by this user
-     */
-    public function purchaseRequisitions()
+    // NEW: Signature URL accessor
+    public function getSignatureUrlAttribute()
+    {
+        if ($this->signature_path && Storage::disk('public')->exists($this->signature_path)) {
+            return Storage::url($this->signature_path);
+        }
+        
+        return null;
+    }
+
+    // NEW: Has signature checker
+    public function hasSignature(): bool
+    {
+        return !empty($this->signature_path) && Storage::disk('public')->exists($this->signature_path);
+    }
+
+    // Existing relationships
+    public function createdPRs()
     {
         return $this->hasMany(PurchaseRequisition::class, 'created_by');
     }
 
-    /**
-     * Get purchase requisitions approved by this user
-     */
-    public function approvedPurchaseRequisitions()
+    public function approvedPRs()
     {
         return $this->hasMany(PurchaseRequisition::class, 'approved_by');
-    }
-
-    /**
-     * Check if user is active
-     */
-    public function isActive(): bool
-    {
-        return $this->is_active;
-    }
-
-    /**
-     * Update last login information
-     */
-    public function updateLastLogin(string $ip): void
-    {
-        $this->update([
-            'last_login_at' => now(),
-            'last_login_ip' => $ip,
-        ]);
     }
 }
