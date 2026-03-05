@@ -9,6 +9,7 @@ use App\Models\PurchaseRequisition;
 use App\Notifications\PrStatusChanged;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class PrApproval extends Component
 {
@@ -28,6 +29,7 @@ class PrApproval extends Component
     public $showApproveModal = false;
     public $approvingPrId = null;
     public $managerSignature;
+    public $existingManagerSignature = null; // NEW
 
     // Rejection modal
     public $showRejectModal = false;
@@ -117,6 +119,12 @@ class PrApproval extends Component
 
         $this->approvingPrId = $id;
         $this->managerSignature = null;
+        
+        // NEW: Auto-load manager signature from profile
+        $this->existingManagerSignature = Auth::user()->hasSignature() 
+            ? Auth::user()->signature_path 
+            : null;
+        
         $this->showApproveModal = true;
     }
 
@@ -125,46 +133,78 @@ class PrApproval extends Component
         $this->showApproveModal = false;
         $this->approvingPrId = null;
         $this->managerSignature = null;
+        $this->existingManagerSignature = null;
     }
 
     public function approvePr()
     {
-        $this->validate([
-            'managerSignature' => 'required|image|mimes:jpg,jpeg,png|max:2048',
-        ], [
-            'managerSignature.required' => 'Signature harus di-upload',
-            'managerSignature.image' => 'File harus berupa gambar',
-            'managerSignature.max' => 'Ukuran file maksimal 2MB',
-        ]);
+        // NEW: Validasi signature - bisa dari upload atau profile
+        $hasSignature = !empty($this->managerSignature) || 
+                       !empty($this->existingManagerSignature) || 
+                       Auth::user()->hasSignature();
 
-        $pr = PurchaseRequisition::findOrFail($this->approvingPrId);
-
-        // Store signature
-        $signaturePath = $this->managerSignature->store('public/signatures');
-
-        $pr->update([
-            'status' => 'approved',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
-            'manager_signature_path' => $signaturePath,
-        ]);
-
-        if ($pr->creator) {
-            $pr->creator->notify(
-                new PrStatusChanged($pr, 'approved')
-            );
+        if (!$hasSignature) {
+            $this->addError('managerSignature', 'Tanda tangan diperlukan. Upload di sini atau set di Profile Anda.');
+            return;
         }
 
-        // Notifikasi Livewire (realtime)
-        $this->dispatch('notificationReceived');
+        // Validate uploaded signature if provided
+        if ($this->managerSignature) {
+            $this->validate([
+                'managerSignature' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            ], [
+                'managerSignature.required' => 'Signature harus di-upload',
+                'managerSignature.image' => 'File harus berupa gambar',
+                'managerSignature.max' => 'Ukuran file maksimal 2MB',
+            ]);
+        }
 
-        activity()
-            ->causedBy(Auth::user())
-            ->performedOn($pr)
-            ->log('PR approved with signature');
+        try {
+            $pr = PurchaseRequisition::findOrFail($this->approvingPrId);
 
-        session()->flash('success', "PR {$pr->pr_number} berhasil disetujui");
-        $this->closeApproveModal();
+            // NEW: Smart signature handling
+            $signaturePath = null;
+            
+            if ($this->managerSignature) {
+                // User uploaded new signature for this approval
+                $signaturePath = $this->managerSignature->store('signatures', 'public');
+                
+            } elseif (Auth::user()->hasSignature()) {
+                // Use signature from profile
+                $signaturePath = Auth::user()->signature_path;
+            }
+
+            $pr->update([
+                'status' => 'approved',
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+                'manager_signature_path' => $signaturePath,
+            ]);
+
+            if ($pr->creator) {
+                $pr->creator->notify(
+                    new PrStatusChanged($pr, 'approved')
+                );
+            }
+
+            // Notifikasi Livewire (realtime)
+            $this->dispatch('notificationReceived');
+
+            activity()
+                ->causedBy(Auth::user())
+                ->performedOn($pr)
+                ->withProperties([
+                    'pr_number' => $pr->pr_number,
+                    'signature_source' => $this->managerSignature ? 'uploaded' : 'profile',
+                ])
+                ->log('PR approved with signature');
+
+            session()->flash('success', "PR {$pr->pr_number} berhasil disetujui");
+            $this->closeApproveModal();
+
+        } catch (\Exception $e) {
+            session()->flash('error', 'Gagal approve PR: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -224,6 +264,12 @@ class PrApproval extends Component
             'rejection_note' => $this->rejectionNote,
         ]);
 
+        if ($pr->creator) {
+            $pr->creator->notify(
+                new PrStatusChanged($pr, 'rejected')
+            );
+        }
+
         activity()
             ->causedBy(Auth::user())
             ->performedOn($pr)
@@ -234,8 +280,7 @@ class PrApproval extends Component
     }
 
     /**
-     * BULK APPROVE (Without signature - quick approve)
-     * Note: Untuk production, mungkin perlu requirement signature untuk bulk juga
+     * BULK APPROVE (With signature from profile)
      */
     public function bulkApprove()
     {
@@ -244,33 +289,53 @@ class PrApproval extends Component
             return;
         }
 
-        // For bulk approve, we'll skip signature requirement for now
-        // In production, you might want to require one signature for all
+        // NEW: Check if manager has signature
+        if (!Auth::user()->hasSignature()) {
+            session()->flash('error', 'Anda belum memiliki signature. Silakan upload signature di Profile terlebih dahulu.');
+            return;
+        }
         
-        DB::transaction(function () {
-            $prs = PurchaseRequisition::whereIn('id', $this->selectedPrs)
-                ->where('status', 'submitted')
-                ->where('created_by', '!=', Auth::id())
-                ->get();
+        try {
+            DB::transaction(function () {
+                $prs = PurchaseRequisition::whereIn('id', $this->selectedPrs)
+                    ->where('status', 'submitted')
+                    ->where('created_by', '!=', Auth::id())
+                    ->get();
 
-            foreach ($prs as $pr) {
-                $pr->update([
-                    'status' => 'approved',
-                    'approved_by' => Auth::id(),
-                    'approved_at' => now(),
-                    // Note: No signature for bulk approve
-                ]);
+                foreach ($prs as $pr) {
+                    $pr->update([
+                        'status' => 'approved',
+                        'approved_by' => Auth::id(),
+                        'approved_at' => now(),
+                        // NEW: Use manager signature from profile for bulk approve
+                        'manager_signature_path' => Auth::user()->signature_path,
+                    ]);
 
-                activity()
-                    ->causedBy(Auth::user())
-                    ->performedOn($pr)
-                    ->log('PR bulk approved (no signature)');
-            }
-        });
+                    if ($pr->creator) {
+                        $pr->creator->notify(
+                            new PrStatusChanged($pr, 'approved')
+                        );
+                    }
 
-        session()->flash('success', count($this->selectedPrs) . ' PR berhasil disetujui (tanpa signature)');
-        $this->selectedPrs = [];
-        $this->selectAll = false;
+                    activity()
+                        ->causedBy(Auth::user())
+                        ->performedOn($pr)
+                        ->withProperties([
+                            'pr_number' => $pr->pr_number,
+                            'signature_source' => 'profile',
+                            'bulk_approve' => true,
+                        ])
+                        ->log('PR bulk approved with profile signature');
+                }
+            });
+
+            session()->flash('success', count($this->selectedPrs) . ' PR berhasil disetujui dengan signature dari profile Anda');
+            $this->selectedPrs = [];
+            $this->selectAll = false;
+
+        } catch (\Exception $e) {
+            session()->flash('error', 'Gagal bulk approve: ' . $e->getMessage());
+        }
     }
 
     public function render()

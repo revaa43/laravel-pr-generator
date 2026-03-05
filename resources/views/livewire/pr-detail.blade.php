@@ -586,26 +586,114 @@
             <div class="bg-white rounded-xl shadow-2xl max-w-md w-full animate-slide-in">
                 <div class="bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-4 rounded-t-xl">
                     <h3 class="text-lg font-bold">Approve Purchase Requisition</h3>
-                    <p class="text-sm text-green-100 mt-1">Upload tanda tangan digital Anda</p>
+                    <p class="text-sm text-green-100 mt-1">Upload tanda tangan untuk persetujuan</p>
                 </div>
                 
                 <form wire:submit.prevent="approvePr" class="p-6 space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-secondary-900 mb-2">
-                            Upload Signature <span class="text-red-500">*</span>
+                    
+                    {{-- Signature Preview --}}
+                    <div class="space-y-3">
+                        <label class="block text-sm font-semibold text-secondary-900">
+                            Tanda Tangan Manager <span class="text-red-500">*</span>
                         </label>
-                        <input 
-                            type="file" 
-                            wire:model="managerSignature"
-                            accept="image/jpeg,image/jpg,image/png"
-                            class="input @error('managerSignature') input-error @enderror"
-                        >
-                        @error('managerSignature')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+
+                        @if($managerSignature)
+                            {{-- New uploaded signature --}}
+                            <div class="relative inline-block w-full">
+                                <div class="w-full h-32 rounded-lg border-2 border-green-200 bg-white p-3 flex items-center justify-center">
+                                    <img src="{{ $managerSignature->temporaryUrl() }}" class="max-w-full max-h-full object-contain">
+                                </div>
+                                <button 
+                                    type="button" 
+                                    wire:click="$set('managerSignature', null)"
+                                    class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                                <p class="text-xs text-green-600 mt-2 font-medium">✓ Signature baru akan digunakan</p>
+                            </div>
+                        @elseif($existingManagerSignature)
+                            {{-- Signature from profile --}}
+                            <div class="space-y-3">
+                                <div class="w-full h-32 rounded-lg border-2 border-secondary-200 bg-white p-3 flex items-center justify-center">
+                                    <img src="{{ Storage::url($existingManagerSignature) }}" class="max-w-full max-h-full object-contain">
+                                </div>
+                                
+                                <div class="flex items-start gap-2 text-xs bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <svg class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <div>
+                                        <p class="text-blue-700 font-medium">Menggunakan signature dari profile Anda</p>
+                                        <p class="text-blue-600 mt-0.5">Upload signature baru di bawah jika ingin menggunakan yang berbeda</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            {{-- No signature --}}
+                            <div class="w-full h-32 rounded-lg border-2 border-dashed border-secondary-300 bg-secondary-50 flex items-center justify-center">
+                                <div class="text-center">
+                                    <svg class="w-10 h-10 mx-auto text-secondary-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                    </svg>
+                                    <p class="text-xs text-secondary-500 font-medium">Belum ada signature</p>
+                                    <p class="text-xs text-secondary-400 mt-1">Upload di bawah atau set di <a href="{{ route('profile') }}" class="text-primary-600 hover:underline">Profile</a></p>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Upload Input --}}
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-3">
+                            <label class="btn-secondary cursor-pointer text-sm flex-1 justify-center">
+                                <input type="file" wire:model="managerSignature" accept="image/*" class="hidden">
+                                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                                </svg>
+                                {{ $existingManagerSignature ? 'Ganti Signature' : 'Upload Signature' }}
+                            </label>
+
+                            @if(!Auth::user()->hasSignature())
+                                <a href="{{ route('profile') }}" class="text-sm text-green-600 hover:text-green-700 font-medium">
+                                    Set di Profile →
+                                </a>
+                            @endif
+                        </div>
+
+                        @error('managerSignature') 
+                            <p class="text-xs text-red-600 font-medium">{{ $message }}</p> 
                         @enderror
-                        <p class="mt-1 text-xs text-secondary-500">
+
+                        <p class="text-xs text-secondary-500">
                             Format: JPG, PNG (Max 2MB)
                         </p>
+
+                        {{-- Upload Progress --}}
+                        <div wire:loading wire:target="managerSignature" class="flex items-center gap-2 text-xs text-green-600">
+                            <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Uploading...
+                        </div>
+
+                        {{-- Warning if no profile signature --}}
+                        @if(!Auth::user()->hasSignature() && !$existingManagerSignature)
+                            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-2">
+                                <div class="flex items-start gap-2">
+                                    <svg class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <div class="flex-1">
+                                        <p class="text-xs font-semibold text-amber-800">Tips: Set signature di Profile</p>
+                                        <p class="text-xs text-amber-700 mt-1">Upload sekali di <a href="{{ route('profile') }}" class="underline font-medium">Profile</a>, otomatis untuk semua approval!</p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
                     <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
@@ -615,7 +703,7 @@
                         </p>
                     </div>
 
-                    <div class="flex gap-3">
+                    <div class="flex gap-3 pt-2">
                         <button 
                             type="button"
                             wire:click="closeApproveModal"
@@ -627,9 +715,15 @@
                             type="submit"
                             class="btn-primary flex-1"
                             wire:loading.attr="disabled"
+                            wire:target="approvePr, managerSignature"
                         >
                             <span wire:loading.remove wire:target="approvePr">Approve PR</span>
-                            <span wire:loading wire:target="approvePr">Processing...</span>
+                            <span wire:loading wire:target="approvePr">
+                                <svg class="animate-spin h-5 w-5 inline-block" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </span>
                         </button>
                     </div>
                 </form>

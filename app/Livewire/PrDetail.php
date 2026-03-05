@@ -27,6 +27,7 @@ class PrDetail extends Component
     public $showPaymentModal = false;
     
     public $managerSignature;
+    public $existingManagerSignature = null; // NEW
     public $rejectionNote = '';
     
     public $paymentProof;
@@ -133,6 +134,12 @@ class PrDetail extends Component
             session()->flash('error', 'Anda tidak memiliki akses untuk approve PR ini');
             return;
         }
+        
+        // NEW: Auto-load manager signature from profile
+        $this->existingManagerSignature = Auth::user()->hasSignature() 
+            ? Auth::user()->signature_path 
+            : null;
+        
         $this->showApproveModal = true;
     }
 
@@ -140,6 +147,7 @@ class PrDetail extends Component
     {
         $this->showApproveModal = false;
         $this->managerSignature = null;
+        $this->existingManagerSignature = null;
     }
 
     public function approvePr()
@@ -149,47 +157,81 @@ class PrDetail extends Component
             return;
         }
 
-        $this->validate([
-            'managerSignature' => 'required|image|mimes:jpg,jpeg,png|max:2048',
-        ], [
-            'managerSignature.required' => 'Signature harus di-upload',
-            'managerSignature.image' => 'File harus berupa gambar',
-            'managerSignature.max' => 'Ukuran file maksimal 2MB',
-        ]);
+        // NEW: Validasi signature - bisa dari upload atau profile
+        $hasSignature = !empty($this->managerSignature) || 
+                       !empty($this->existingManagerSignature) || 
+                       Auth::user()->hasSignature();
 
-        // Store signature
-        $signaturePath = $this->managerSignature->store('signatures', 'public');
+        if (!$hasSignature) {
+            $this->addError('managerSignature', 'Tanda tangan diperlukan. Upload di sini atau set di Profile Anda.');
+            return;
+        }
 
-        $this->pr->update([
-            'status' => 'approved',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
-            'manager_signature_path' => $signaturePath,
-        ]);
+        // Validate uploaded signature if provided
+        if ($this->managerSignature) {
+            $this->validate([
+                'managerSignature' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            ], [
+                'managerSignature.required' => 'Signature harus di-upload',
+                'managerSignature.image' => 'File harus berupa gambar',
+                'managerSignature.max' => 'Ukuran file maksimal 2MB',
+            ]);
+        }
 
-        // Auto-generate DOCX after approval
         try {
-            $docxService = app(PrDocxGeneratorService::class);
-            $docxPath = $docxService->generateDocx($this->pr);
+            // NEW: Smart signature handling
+            $signaturePath = null;
             
+            if ($this->managerSignature) {
+                // User uploaded new signature for this approval
+                $signaturePath = $this->managerSignature->store('signatures', 'public');
+                
+            } elseif (Auth::user()->hasSignature()) {
+                // Use signature from profile
+                $signaturePath = Auth::user()->signature_path;
+            }
+
+            $this->pr->update([
+                'status' => 'approved',
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+                'manager_signature_path' => $signaturePath,
+            ]);
+
+            // Auto-generate DOCX after approval
+            try {
+                $docxService = app(PrDocxGeneratorService::class);
+                $docxPath = $docxService->generateDocx($this->pr);
+                
+                activity()
+                    ->causedBy(Auth::user())
+                    ->performedOn($this->pr)
+                    ->withProperties([
+                        'docx_generated' => $docxPath,
+                        'signature_source' => $this->managerSignature ? 'uploaded' : 'profile',
+                    ])
+                    ->log('PR approved with signature - DOCX auto-generated');
+            } catch (\Exception $e) {
+                Log::error('DOCX generation failed after approval: ' . $e->getMessage());
+            }
+
             activity()
                 ->causedBy(Auth::user())
                 ->performedOn($this->pr)
-                ->withProperties(['docx_generated' => $docxPath])
-                ->log('PR approved with signature - DOCX auto-generated');
+                ->withProperties([
+                    'signature_source' => $this->managerSignature ? 'uploaded' : 'profile',
+                ])
+                ->log('PR approved with signature');
+
+            session()->flash('success', 'PR berhasil disetujui');
+            $this->closeApproveModal();
+            $this->loadPr();
+            $this->checkPermissions();
+
         } catch (\Exception $e) {
-            Log::error('DOCX generation failed after approval: ' . $e->getMessage());
+            Log::error('PR approval failed: ' . $e->getMessage());
+            session()->flash('error', 'Gagal approve PR: ' . $e->getMessage());
         }
-
-        activity()
-            ->causedBy(Auth::user())
-            ->performedOn($this->pr)
-            ->log('PR approved with signature');
-
-        session()->flash('success', 'PR berhasil disetujui');
-        $this->closeApproveModal();
-        $this->loadPr();
-        $this->checkPermissions();
     }
 
     /**
@@ -356,6 +398,13 @@ class PrDetail extends Component
             return;
         }
         return Storage::disk('public')->download($this->pr->payment_proof_path);
+    }
+
+    // NEW: Download invoice
+    public function downloadInvoice($invoiceId)
+    {
+        $invoice = $this->pr->invoices()->findOrFail($invoiceId);
+        return Storage::disk('public')->download($invoice->file_path, $invoice->file_name);
     }
 
     public function render()

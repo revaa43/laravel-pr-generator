@@ -14,33 +14,63 @@ class OutletSeeder extends Seeder
     {
         $outlets = [
             [
+                'name' => 'Sushi Mentai Siantar',
+                'code' => 'SMT-SNT',
+                'address' => 'Pematang Siantar, Sumatera Utara',
+                'is_active' => true,
+            ],
+            [
                 'name' => 'Sushi Mentai Kelapa Gading',
                 'code' => 'SMT-KG',
                 'address' => 'Kelapa Gading, Jakarta Utara',
                 'is_active' => true,
             ],
             [
-                'name' => 'Sushi Mentai Grand Indonesia',
-                'code' => 'SMT-GI',
-                'address' => 'Grand Indonesia Mall, Jakarta Pusat',
+                'name' => 'Sushi Mentai Bintaro',
+                'code' => 'SMT-BTR',
+                'address' => 'Bintaro, Tangerang Selatan',
                 'is_active' => true,
             ],
             [
-                'name' => 'Sushi Mentai PIK',
-                'code' => 'SMT-PIK',
-                'address' => 'Pantai Indah Kapuk, Jakarta Utara',
+                'name' => 'Sushi Mentai Alam Sutera',
+                'code' => 'SMT-AS',
+                'address' => 'Alam Sutera, Tangerang',
                 'is_active' => true,
             ],
             [
-                'name' => 'Sushi Mentai Pondok Indah',
-                'code' => 'SMT-PI',
-                'address' => 'Pondok Indah Mall, Jakarta Selatan',
+                'name' => 'Sushi Mentai Batam',
+                'code' => 'SMT-BTM',
+                'address' => 'Batam, Kepulauan Riau',
                 'is_active' => true,
             ],
             [
-                'name' => 'Sushi Mentai Central Park',
-                'code' => 'SMT-CP',
-                'address' => 'Central Park Mall, Jakarta Barat',
+                'name' => 'Sushi Mentai Pekanbaru',
+                'code' => 'SMT-PKB',
+                'address' => 'Pekanbaru, Riau',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Sushi Mentai Merak Jingga',
+                'code' => 'SMT-MJ',
+                'address' => 'Merak Jingga, Medan',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Sushi Mentai Cemara Asri',
+                'code' => 'SMT-CA',
+                'address' => 'Cemara Asri, Medan',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Sushi Mentai Dr. Cipto',
+                'code' => 'SMT-DC',
+                'address' => 'Dr. Cipto, Medan',
+                'is_active' => true,
+            ],
+            [
+                'name' => 'Sushi Mentai Yogyakarta',
+                'code' => 'SMT-YK',
+                'address' => 'Yogyakarta',
                 'is_active' => true,
             ],
         ];
@@ -49,6 +79,6 @@ class OutletSeeder extends Seeder
             Outlet::create($outlet);
         }
 
-        $this->command->info('Outlets seeded successfully!');
+        $this->command->info('✓ 10 Outlets Sushi Mentai seeded successfully!');
     }
 }
