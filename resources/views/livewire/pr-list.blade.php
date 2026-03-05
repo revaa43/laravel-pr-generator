@@ -174,7 +174,7 @@
                                     <td class="text-sm">{{ $pr->creator->name }}</td>
                                     <td>
                                         <div class="flex items-center gap-2">
-                                            <!-- View Detail (untuk semua status) -->
+                                            <!-- View Detail -->
                                             <a 
                                                 href="{{ route('pr.show', $pr->id) }}"
                                                 class="text-blue-600 hover:text-blue-800 p-1"
@@ -185,6 +185,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                                 </svg>
                                             </a>
+
                                             <!-- Edit (only for draft) -->
                                             @if($pr->status === 'draft')
                                                 @can('pr.edit')
@@ -198,21 +199,57 @@
                                                         </svg>
                                                     </a>
                                                 @endcan
+                                            @endif
 
-                                                <!-- Delete (only for draft) -->
-                                                @can('pr.delete')
+                                            <!-- Delete Button - UPDATED LOGIC -->
+                                            @can('pr.delete')
+                                                @php
+                                                    $canDelete = false;
+                                                    $deleteTitle = 'Delete';
+                                                    $isOwner = ($pr->created_by === auth()->id());
+                                                    
+                                                    // Manager/Admin can delete Draft, Submitted, Approved, Rejected (NOT Paid)
+                                                    if (auth()->user()->hasAnyRole(['super_admin', 'admin', 'manager'])) {
+                                                        $canDelete = !$pr->isPaid();
+                                                        $deleteTitle = $pr->isPaid() 
+                                                            ? 'Paid status tidak dapat dihapus (financial record)' 
+                                                            : 'Delete PR';
+                                                    } 
+                                                    // NEW: Staff can delete their own PR with ANY status
+                                                    else if ($isOwner) {
+                                                        $canDelete = true;
+                                                        $deleteTitle = 'Delete PR milik Anda';
+                                                    }
+                                                    // Cannot delete PR from other staff
+                                                    else {
+                                                        $canDelete = false;
+                                                        $deleteTitle = 'Anda tidak bisa menghapus PR milik orang lain';
+                                                    }
+                                                @endphp
+                                                
+                                                @if($canDelete)
                                                     <button 
                                                         wire:click="deletePr({{ $pr->id }})"
-                                                        wire:confirm="Apakah Anda yakin ingin menghapus PR ini?"
+                                                        wire:confirm="Hapus PR {{ $pr->pr_number }}? Semua data terkait (invoices, signatures, payment proof) akan dihapus permanen!"
                                                         class="text-red-600 hover:text-red-800 p-1"
-                                                        title="Delete"
+                                                        title="{{ $deleteTitle }}"
                                                     >
                                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                         </svg>
                                                     </button>
-                                                @endcan
-                                            @endif
+                                                @else
+                                                    {{-- Show disabled delete icon with tooltip --}}
+                                                    <span 
+                                                        class="text-secondary-300 p-1 cursor-not-allowed" 
+                                                        title="{{ $deleteTitle }}"
+                                                    >
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                        </svg>
+                                                    </span>
+                                                @endif
+                                            @endcan
                                         </div>
                                     </td>
                                 </tr>

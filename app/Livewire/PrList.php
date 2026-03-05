@@ -6,6 +6,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\PurchaseRequisition;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class PrList extends Component
 {
@@ -53,26 +54,92 @@ class PrList extends Component
     {
         $pr = PurchaseRequisition::findOrFail($id);
 
+        $user = Auth::user();
+        
         // Check authorization
-        if (!Auth::user()->can('pr.delete') && $pr->created_by !== Auth::id()) {
+        $isManager = $user->hasAnyRole(['super_admin', 'admin', 'manager']) 
+                   && $user->can('pr.delete');
+        
+        $isOwner = ($pr->created_by === $user->id) 
+                 && $user->can('pr.delete');
+        
+        if (!$isManager && !$isOwner) {
             session()->flash('error', 'Anda tidak memiliki akses untuk menghapus PR ini');
             return;
         }
 
-        // Can only delete draft
-        if (!$pr->isDraft()) {
-            session()->flash('error', 'Hanya PR dengan status draft yang dapat dihapus');
-            return;
+        // NEW: Deletion rules
+        if ($isManager) {
+            // Manager can delete Draft, Submitted, Approved, Rejected
+            // But NOT Paid (financial record must be kept)
+            if ($pr->isPaid()) {
+                session()->flash('error', 'PR dengan status Paid tidak dapat dihapus (financial record harus disimpan)');
+                return;
+            }
+        } else if ($isOwner) {
+            // NEW: Staff can delete their own PR with ANY status
+            // No status restriction for owner
+            // They created it, they can delete it
         }
 
-        $pr->delete();
+        try {
+            // Delete related files
+            // 1. Delete invoices
+            if ($pr->invoices()->count() > 0) {
+                foreach ($pr->invoices as $invoice) {
+                    if (Storage::disk('public')->exists($invoice->file_path)) {
+                        Storage::disk('public')->delete($invoice->file_path);
+                    }
+                }
+                $pr->invoices()->delete();
+            }
 
-        activity()
-            ->causedBy(Auth::user())
-            ->performedOn($pr)
-            ->log('PR deleted');
+            // 2. Delete staff signature (if not from profile)
+            if ($pr->staff_signature_path 
+                && $pr->creator
+                && $pr->staff_signature_path !== $pr->creator->signature_path
+                && Storage::disk('public')->exists($pr->staff_signature_path)) {
+                Storage::disk('public')->delete($pr->staff_signature_path);
+            }
 
-        session()->flash('success', 'PR berhasil dihapus');
+            // 3. Delete manager signature (if not from profile)
+            if ($pr->manager_signature_path 
+                && $pr->approver
+                && $pr->manager_signature_path !== $pr->approver->signature_path
+                && Storage::disk('public')->exists($pr->manager_signature_path)) {
+                Storage::disk('public')->delete($pr->manager_signature_path);
+            }
+
+            // 4. Delete payment proof (if exists)
+            if ($pr->payment_proof_path 
+                && Storage::disk('public')->exists($pr->payment_proof_path)) {
+                Storage::disk('public')->delete($pr->payment_proof_path);
+            }
+
+            // 5. Delete PR items (cascaded by database, but explicit for clarity)
+            $pr->items()->delete();
+
+            // 6. Delete PR
+            $prNumber = $pr->pr_number;
+            $prStatus = $pr->status;
+            $pr->delete();
+
+            activity()
+                ->causedBy(Auth::user())
+                ->withProperties([
+                    'pr_number' => $prNumber,
+                    'deleted_by_role' => $user->roles->pluck('name')->first(),
+                    'status' => $prStatus,
+                    'is_owner' => $isOwner,
+                ])
+                ->log('PR deleted');
+
+            session()->flash('success', "PR {$prNumber} (status: {$prStatus}) berhasil dihapus");
+
+        } catch (\Exception $e) {
+            \Log::error('Delete PR failed: ' . $e->getMessage());
+            session()->flash('error', 'Gagal menghapus PR: ' . $e->getMessage());
+        }
     }
 
     public function render()
