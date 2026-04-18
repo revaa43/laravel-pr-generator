@@ -25,7 +25,7 @@
 
             {{-- Photo --}}
             <img
-                src="/sushi-mentai-store.png"
+                src="/sushi-mentai-store.jpg"
                 alt="Sushi Mentai Store"
                 class="absolute inset-0 w-full h-full object-cover object-center"
             >

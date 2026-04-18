@@ -1,21 +1,23 @@
 <aside id="sidebar" class="sidebar fixed top-0 left-0 h-screen bg-white border-r border-secondary-100 z-40 flex flex-col w-64 -translate-x-full lg:translate-x-0 shadow-soft">
     
     {{-- LOGO & BRAND SECTION --}}
-    <div class="h-20 flex items-center justify-between px-6 border-b border-secondary-100 flex-shrink-0">
-        <div id="brandContent" class="flex items-center gap-3 ml-10 mr-3">
-            <div class="logo-container">
-                <img 
-                    src="/sushi-mentai-logo.png" 
-                    alt="Logo" 
-                    id="logoImg"
-                    class="logo-img logo-expanded"
-                >
-            </div>
+    <div class="h-20 flex items-center justify-between px-4 ml-4 border-b border-secondary-100 flex-shrink-0">
+
+        {{-- Logo: shown in full when expanded, hidden when collapsed --}}
+        <div id="brandContent" class="flex items-center gap-3 overflow-hidden">
+            <img 
+                src="/sushi-mentai-logo.png" 
+                alt="Logo" 
+                id="logoImg"
+                class="logo-img logo-expanded flex-shrink-0"
+            >
         </div>
-        
-        {{-- Collapse Button --}}
-        <button id="toggleCollapse" class="hidden lg:flex p-2 rounded-lg hover:bg-orange-light-50 text-secondary-600 hover:text-primary-500 transition-all duration-200 group">
-            <svg class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+
+        {{-- Collapse Button (desktop only) --}}
+        <button id="toggleCollapse"
+                title="Toggle Sidebar"
+                class="hidden lg:flex flex-shrink-0 p-2 rounded-lg hover:bg-orange-light-50 text-secondary-400 hover:text-primary-500 transition-all duration-200">
+            <svg class="w-4 h-4" style="transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
             </svg>
         </button>
@@ -100,30 +102,31 @@
 
     {{-- USER PROFILE SECTION - NEW DESIGN --}}
     <div class="mt-auto border-t border-secondary-200 p-4 flex-shrink-0">
-        <a href="{{ route('profile') }}" class="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-primary-50 hover:shadow-orange-soft transition-all duration-200 group {{ request()->routeIs('profile') ? 'bg-primary-50 shadow-orange-soft' : '' }}">
+        <a href="{{ route('profile') }}" class="nav-link relative flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-primary-50 hover:shadow-orange-soft transition-all duration-200 group {{ request()->routeIs('profile') ? 'bg-primary-50 shadow-orange-soft' : '' }}">
             {{-- User Avatar --}}
-            <div class="relative flex-shrink-0">
+            <div class="icon-container relative flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center">
                 <img src="{{ Auth::user()->avatar_url }}" 
                      alt="{{ Auth::user()->name }}" 
-                     class="w-11 h-11 rounded-xl object-cover border-2 {{ request()->routeIs('profile') ? 'border-primary-300' : 'border-secondary-200' }} group-hover:border-primary-300 transition-colors">
+                     class="w-9 h-9 rounded-xl object-cover border-2 {{ request()->routeIs('profile') ? 'border-primary-300' : 'border-secondary-200' }} group-hover:border-primary-300 transition-colors">
                 
                 {{-- Signature indicator badge --}}
                 @if(Auth::user()->hasSignature())
-                    <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full flex items-center justify-center" title="Signature tersimpan">
-                        <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full flex items-center justify-center" title="Signature tersimpan">
+                        <svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                         </svg>
                     </div>
                 @else
-                    <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-amber-500 border-2 border-white rounded-full flex items-center justify-center" title="Set signature">
-                        <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 border-2 border-white rounded-full flex items-center justify-center" title="Set signature">
+                        <svg class="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
                         </svg>
                     </div>
                 @endif
             </div>
 
-            <div class="flex-1 min-w-0">
+            {{-- Profile text (hidden when collapsed) --}}
+            <div class="nav-text flex-1 min-w-0">
                 <p class="text-sm font-semibold text-secondary-900 truncate group-hover:text-primary-600 transition-colors">
                     {{ Auth::user()->name }}
                 </p>
@@ -131,91 +134,77 @@
                     {{ Auth::user()->roles->pluck('name')->first() ?? 'User' }}
                 </p>
             </div>
-
-            <svg class="w-5 h-5 text-secondary-400 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-            </svg>
         </a>
 
         {{-- Logout Button --}}
-        <form method="POST" action="{{ route('logout') }}" class="mt-2">
+        <form method="POST" action="{{ route('logout') }}" class="mt-1">
             @csrf
-            <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 group">
-                <div class="w-9 h-9 rounded-lg bg-red-50 group-hover:bg-red-100 flex items-center justify-center transition-colors">
+            <button type="submit" class="nav-link w-full flex items-center gap-3 px-3 py-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 group">
+                <div class="icon-container w-9 h-9 rounded-lg bg-red-50 group-hover:bg-red-100 flex items-center justify-center transition-colors flex-shrink-0">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                     </svg>
                 </div>
-                <span class="text-sm font-medium">Logout</span>
+                <span class="nav-text text-sm font-medium">Logout</span>
             </button>
         </form>
     </div>
 </aside>
 
 <style>
-    /* Custom Scrollbar */
-    .hide-scrollbar::-webkit-scrollbar {
-        width: 4px;
-    }
-    
-    .hide-scrollbar::-webkit-scrollbar-track {
-        background: #fafafa;
-    }
-    
-    .hide-scrollbar::-webkit-scrollbar-thumb {
-        background: #fed7aa;
-        border-radius: 2px;
-    }
-    
-    .hide-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #fdba74;
+    /* ── Sidebar base transition ── */
+    .sidebar {
+        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* Logo Transitions */
+    /* ── Logo transitions ── */
     .logo-img {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.2s ease;
+        object-fit: contain;
     }
-    
-    .logo-collapsed {
-        width: 32px;
-        height: 32px;
-    }
-    
-    .logo-expanded {
-        width: 110px;
-        height: auto;
-    }
+    .logo-expanded { width: 110px; height: auto; }
+    .logo-collapsed { width: 32px; height: 32px; }
 
-    /* Icon Container */
-    .icon-container {
-        transition: all 0.2s ease;
-    }
-
-    /* Collapsed State */
-    .sidebar-collapsed .icon-container {
-        margin-left: 0;
-        justify-content: center;
-    }
-
+    /* ── Collapsed state overrides ── */
     .sidebar-collapsed .nav-link {
         justify-content: center;
-        padding-left: 0.75rem;
-        padding-right: 0.75rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
     }
-
     .sidebar-collapsed .nav-text {
-        display: none;
+        display: none !important;
     }
-
     .sidebar-collapsed .nav-badge {
         position: absolute;
-        top: 0.25rem;
-        right: 0.25rem;
-        transform: scale(0.8);
+        top: 0.2rem;
+        right: 0.2rem;
+        transform: scale(0.75);
+    }
+    .sidebar-collapsed .icon-container {
+        margin-left: 0 !important;
+    }
+    .sidebar-collapsed #brandContent {
+        display: none !important;
+    }
+    .sidebar-collapsed #brandCollapsed {
+        display: flex !important;
+    }
+    .sidebar-collapsed #toggleIcon {
+        transform: rotate(180deg);
     }
 
-    /* Sidebar Transitions */
-    .sidebar {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* ── Custom nav scrollbar ── */
+    .hide-scrollbar::-webkit-scrollbar { width: 3px; }
+    .hide-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .hide-scrollbar::-webkit-scrollbar-thumb { background: #fed7aa; border-radius: 2px; }
+    .hide-scrollbar::-webkit-scrollbar-thumb:hover { background: #fb923c; }
+
+    /* ── Icon container ── */
+    .icon-container {
+        transition: background-color 0.2s ease, margin 0.3s ease;
+        flex-shrink: 0;
     }
 </style>

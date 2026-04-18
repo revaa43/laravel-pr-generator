@@ -118,10 +118,11 @@
                         <th>Email</th>
                         <th>Role</th>
                         <th>Status</th>
-                        <th>Last Login</th>
                         <th>Created</th>
-                        <th class="text-right">Actions</th>
-                    </tr>
+                        @if(!Auth::user()->hasRole('manager'))
+                            <th class="text-right">Actions</th>
+                        @endif
+                    </tr>   
                 </thead>
                 <tbody>
                     @forelse($users as $user)
@@ -151,10 +152,8 @@
                                     <span class="badge badge-danger">Inactive</span>
                                 @endif
                             </td>
-                            <td class="text-sm">
-                                {{ $user->last_login_at ? $user->last_login_at->diffForHumans() : 'Never' }}
-                            </td>
                             <td class="text-sm">{{ $user->created_at->format('d M Y') }}</td>
+                            @if(!Auth::user()->hasRole('manager'))
                             <td>
                                 <div class="flex justify-end items-center gap-2">
                                     {{-- Edit --}}
@@ -216,10 +215,11 @@
                                     @endcan
                                 </div>
                             </td>
+                            @endif
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="7" class="text-center py-12">
+                            <td colspan="{{ Auth::user()->hasRole('manager') ? 5 : 6 }}" class="text-center py-12">
                             <svg class="w-16 h-16 mx-auto mb-4 text-secondary-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                             </svg>
@@ -230,12 +230,9 @@
                 </tbody>
             </table>
         </div>
+        
         {{-- Pagination --}}
-        @if($users->hasPages())
-            <div class="px-6 py-4 border-t border-secondary-200">
-                {{ $users->links() }}
-            </div>
-        @endif
+        <x-pagination :paginator="$users" />
     </div>
     {{-- CREATE MODAL --}}
     @if($showCreateModal)

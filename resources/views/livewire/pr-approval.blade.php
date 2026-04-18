@@ -279,11 +279,8 @@
             </table>
         </div>
 
-        @if($pendingPrs->hasPages())
-            <div class="px-6 py-4 border-t border-secondary-200">
-                {{ $pendingPrs->links() }}
-            </div>
-        @endif
+        {{-- Pagination --}}
+        <x-pagination :paginator="$pendingPrs" />
     </div>
 
     {{-- REJECT MODAL --}}

@@ -35,16 +35,13 @@
         <div class="flex items-center gap-2">
             
             {{-- Search Button (Optional) --}}
-            <button class="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary-50 text-secondary-600 transition-colors">
+            <!-- <button class="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-secondary-50 text-secondary-600 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
                 <span class="text-sm">Search</span>
                 <kbd class="hidden lg:inline-flex px-1.5 py-0.5 text-xs font-mono bg-secondary-100 border border-secondary-200 rounded">⌘K</kbd>
-            </button>
-
-            {{-- Notification Bell --}}
-            <livewire:notification-bell />
+            </button> -->
 
             {{-- Divider --}}
             <div class="w-px h-6 bg-secondary-200"></div>

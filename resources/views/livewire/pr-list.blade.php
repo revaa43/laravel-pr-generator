@@ -269,11 +269,7 @@
                 </div>
 
                 <!-- Pagination -->
-                @if($purchaseRequisitions->hasPages())
-                    <div class="px-6 py-4 border-t border-secondary-200">
-                        {{ $purchaseRequisitions->links() }}
-                    </div>
-                @endif
+                <x-pagination :paginator="$purchaseRequisitions" />
             </div>
         </div>
     </div>
